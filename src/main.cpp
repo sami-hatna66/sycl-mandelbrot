@@ -1,5 +1,6 @@
 #include <CL/sycl.hpp>
 #include <SDL2/SDL.h>
+#include <chrono>
 #include <iostream>
 #include <array>
 using namespace std;
@@ -37,7 +38,7 @@ array<int, HEIGHT * WIDTH> value = {};
 auto valueBuf = sycl::buffer<int>(value.data(), WIDTH * HEIGHT);
 
 // SYCL GPU queue 
-sycl::queue mandelbrotQueue{sycl::gpu_selector()};
+sycl::queue mandelbrotQueue{sycl::gpu_selector(), sycl::property::queue::enable_profiling()};
 
 // Helper function converts hsv to rgb (SDL can only render RGB colours)
 array<float, 3> HSVtoRGB(float h, float s, float v) {
@@ -73,7 +74,7 @@ int mandelbrot(complex<float> c) {
 
 void collectMandelbrotVals(float x1, float x2, float y1, float y2) {
     // Enqueue task
-    mandelbrotQueue.submit([&](sycl::handler& cgh) {
+    sycl::event event = mandelbrotQueue.submit([&](sycl::handler& cgh) {
         // Accessors
         auto hueAcc = hueBuf.get_access<sycl::access::mode::write>(cgh);
         auto valueAcc = valueBuf.get_access<sycl::access::mode::write>(cgh);
@@ -95,6 +96,12 @@ void collectMandelbrotVals(float x1, float x2, float y1, float y2) {
             hueAcc[xCoord + (yCoord * WIDTH)] = hue;
         });
     });
+
+    event.wait();
+    uint64_t start = event.get_profiling_info<sycl::info::event_profiling::command_start>();
+    uint64_t end = event.get_profiling_info<sycl::info::event_profiling::command_end>();
+    auto duration = static_cast<double>(end - start) / 1000000000.0;
+    cout << "Kernel execution time: " << duration << " sec" << endl;
 
     // Buffers write back to global memory
     hueBuf.get_access<sycl::access::mode::read>();
