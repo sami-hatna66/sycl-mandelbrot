@@ -111,6 +111,7 @@ void collectMandelbrotVals(float x1, float x2, float y1, float y2) {
 
         mandelbrotQueue.throw_asynchronous();
 
+        // For benchmarking
         event.wait();
         uint64_t start = event.get_profiling_info<sycl::info::event_profiling::command_start>();
         uint64_t end = event.get_profiling_info<sycl::info::event_profiling::command_end>();
