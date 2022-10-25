@@ -1,7 +1,7 @@
 # SYCL Mandelbrots
 
 Mandelbrot viewer making use of parallel processing optimisations using SYCL. Graphics are rendered via SDL. 
-Tested on Ubuntu 20.04.4 compiled with DPC++.
+Tested on Ubuntu 20.04.4 compiled with DPC++ and ComputeCPP.
 
 ## Demo
 
